@@ -1,2 +1,2 @@
 Flask
-mediapipe
+https://github.com/tamnguyenvan/language-detector-api-nextjs/releases/download/0.1.0/mediapipe-0.10.15-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl

@@ -1,5 +1,8 @@
-from pathlib import Path
+import os
 import logging
+from pathlib import Path
+from functools import wraps
+
 from flask import Flask, request, jsonify
 from mediapipe.tasks import python
 from mediapipe.tasks.python import text
@@ -20,7 +23,26 @@ detector = text.LanguageDetector.create_from_options(options)
 
 logger.info("Language detector initialized successfully.")
 
+def check_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get("X-RapidAPI-Proxy-Secret")
+        if not auth_header:
+            logger.warning(f"Authorization header missing. IP: {request.remote_addr}")
+            return jsonify({"success": False, "error": "Authorization header is missing"}), 401
+
+        # Uncomment the following lines when ready to implement full auth check
+        token = os.getenv("API_KEY")
+        if not auth_header == token:
+            logger.warning(f"Invalid authorization header. IP: {request.remote_addr}")
+            return jsonify({"success": False, "error": "Invalid authorization header"}), 401
+
+        logger.info(f"Request authorized. IP: {request.remote_addr}")
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route("/detect", methods=["POST"])
+@check_auth
 def detect_language():
     data = request.json
     input_text = data.get("text", "")
@@ -59,6 +81,10 @@ def not_found(error):
 def internal_server_error(error):
     logger.error(f"500 error: {str(error)}", exc_info=True)
     return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/ping")
+def ping():
+    return "ok", 200
 
 if __name__ == "__main__":
     logger.info("Starting the Flask application...")

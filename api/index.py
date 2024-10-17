@@ -1,3 +1,4 @@
+from pathlib import Path
 import logging
 from flask import Flask, request, jsonify
 from mediapipe.tasks import python
@@ -11,7 +12,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Initialize the language detector
-base_options = python.BaseOptions(model_asset_path="detector.tflite")
+data_dir = Path(__file__).resolve().parent / "data"
+detector_path = str(data_dir / "detector.tflite")
+base_options = python.BaseOptions(model_asset_path=detector_path)
 options = text.LanguageDetectorOptions(base_options=base_options)
 detector = text.LanguageDetector.create_from_options(options)
 
